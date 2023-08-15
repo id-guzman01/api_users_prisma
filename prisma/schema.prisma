@@ -33,8 +33,8 @@ model Role {
 
 model RoleUser {
   id      Int  @id @default(autoincrement())
-  user    User @relation("User_has_Role", fields: [user_id], references: [id])
+  user    User @relation("User_has_Role", fields: [user_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
   user_id Int
-  role    Role @relation("Role_has_User", fields: [role_id], references: [id])
+  role    Role @relation("Role_has_User", fields: [role_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
   role_id Int
 }
