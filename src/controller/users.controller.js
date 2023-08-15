@@ -1,23 +1,31 @@
 import {prisma} from "../database/connection";
+import config from "../config"
+import bcrypt from "bcryptjs";
+import handleError from "../errors/handle.error"
 
 const getUsers = async (request, response) => {
     try {
-        const result = await prisma.user.findMany();
+        const result = await prisma.user.findMany({
+            select: {
+                name: true,
+                email: true,
+                telefono: true,
+                documento: true,
+            }
+        });
         if(result){
-            response.json(result);
+            response.status(200).json({
+                status: 200,
+                result
+            });
         }else{
-            response.status(200);
-            response.send({
+            response.status(200).send({
                 status: 200,
                 message: "Actualmente no se encuentran registros"
             });
         } 
     } catch (error) {
-        response.status(500);
-        response.send({
-            status: 500,
-            message: "Bad request, actualmente no es posible procesar la petición"
-        });
+        handleError.error(response,error);
     }
 };
 
@@ -28,46 +36,43 @@ const getUser = async (request, response) => {
             where: {
                 id: parseInt(id)
             },
-            include: {
+            select: {
+                name: true,
+                email: true,
+                telefono: true,
+                documento: true,
                 RoleUser: {
-                    include: {
+                    select: {
+                        role_id: true,
                         role: {
                             select: {
-                                role: true
+                                role: true,
                             },
                         },
                     },
                 },
-            },
+            }
         });
-        response.json(result);
+        response.status(200).json({
+            status: 200,
+            result,
+        });
     } catch (error) {
-        if(error.code == 'P2025'){
-            response.status(500);
-            response.send({
-                status: 500,
-                message: "Bad request, no se encuentra el registro solicitado"
-            });
-        }else{
-            response.status(500);
-            response.send({
-                status: 500,
-                message: "Bad request, el parametro a buscar no es un formato correcto"
-            });
-        }
+        handleError.error(response,error);
     }
 }
 
 const addUser = async (request, response) => {
     try {
         const {name, documento, telefono, email, password, role_id} = request.body;
+        const password_encrypted = bcrypt.hashSync(password, 10);
         await prisma.user.create({
             data: {
                 name: name,
                 documento: documento,
                 telefono: telefono,
                 email: email,
-                password: password,
+                password: password_encrypted,
                 RoleUser: {
                     create: {
                         role_id: parseInt(role_id)
@@ -78,24 +83,12 @@ const addUser = async (request, response) => {
                 RoleUser: true
             }
         });
-        response.json({
+        response.status(201).json({
             status: 201,
             message: "user add successful"
         });
     } catch (error) {
-        if(error.code == 'P2002'){
-            response.status(500);
-            response.json({
-                status: 500,
-                message: "Bad request, el email que ingreso ya se encuentra registrado"
-            });
-        }else{
-            response.status(500);
-            response.json({
-                status: 500,
-                message: "Bad request, el parametro a buscar no es un formato correcto"
-            });
-        }
+        handleError.error(response,error);
     }
 }
 
@@ -112,28 +105,14 @@ const updateUser = async (request, response) => {
                 documento: documento,
                 telefono: telefono,
                 email: email,
-                password: password
             },
         });
-        response.status(200);
-        response.json({
+        response.status(200).json({
             status: 200,
             message: "User updated successful"
         });
     } catch (error) {
-        if(error.code == 'P2002'){
-            response.status(500);
-            response.json({
-                status: 500,
-                message: "Bad request, el email ingresado ya se encuentra registrado"
-            });
-        }else{
-            response.status(500);
-            response.json({
-                status: 500,
-                message: "Bad request, actualmente no es posible realizar la petición"
-            });
-        }
+        handleError.error(response,error);
     }
 }
 
@@ -145,25 +124,34 @@ const deleteUser = async(request, response) => {
                 id: parseInt(id),
             },
         });
-        response.status(200);
-        response.json({
+        response.status(200).json({
             status: 200,
-            message: "user deleted successful"
+            message: "User deleted successful"
         });
     } catch (error) {
-        if(error.code == 'P2025'){
-            response.status(500);
-            response.json({
-                status: 500,
-                message: "Bad request, el registro que intenta registrar no existe"
-            });
-        }else{
-            response.status(500);
-            response.json({
-                status: 500,
-                message: "Bad request, actualmente no es posible realizar la petición"
-            });
-        }
+        handleError.error(response,error);
+    }
+}
+
+const updateRole = async (request, response) => {
+    try {
+        const {id} = request.params;
+        const {role_id} = request.body;
+        const result = await prisma.RoleUser.updateMany({
+            where: {
+                user_id: parseInt(id),
+            },
+            data: {
+                role_id: parseInt(role_id),
+            },
+        });
+        console.log(id);
+        response.status(200).json({
+            status: 200,
+            message: "Role User uppdated successful"
+        });
+    } catch (error) {
+        handleError.error(response,error);
     }
 }
 
@@ -172,5 +160,6 @@ export const method = {
     getUser,
     addUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    updateRole
 }

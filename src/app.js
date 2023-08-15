@@ -7,6 +7,7 @@ const app = express();
 
 //Import Routes
 import userRoutes from "./routes/users.routes"
+import authRoutes from "./routes/auth.routes"
 
 //settings
 app.set("port",3000);
@@ -19,5 +20,6 @@ app.use(bodyParser.urlencoded({extended: false}));
 
 //Definition routes
 app.use("/api/v1/users",userRoutes);
+app.use("/api/v1/auth",authRoutes);
 
 export default app;
