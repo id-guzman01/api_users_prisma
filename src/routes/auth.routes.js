@@ -5,7 +5,13 @@ import authMiddleware from "../middleware/auth.middleware"
 
 const router = Router();
 
-router.post("/",authMiddleware.validateExistsToken,authValidator.validateLogin,authController.login);
-router.post("/changuePassword/:id",authMiddleware.isLogged,authValidator.validatePassword,authController.changuePassword);
+router.post("/",
+            authMiddleware.validateExistsToken,
+            authValidator.validateLogin,
+            authController.login);
+router.post("/changuePassword/:id",
+            authMiddleware.isLogged,
+            authValidator.validatePassword,
+            authController.changuePassword);
 
 export default router;
